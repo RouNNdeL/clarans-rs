@@ -1,13 +1,11 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
 
-pub trait Distance {
-    fn distance(&self, other: &Self) -> f64;
+pub trait Distance<T = Self> {
+    fn distance(self, other: T) -> f64;
 }
 
 fn get_neighbor<'a, T>(points: &'a [T], medoids: &[&'a T]) -> Vec<&'a T>
-where
-    T: Distance,
 {
     let mut rng = rand::thread_rng();
     let med_idx = rng.gen_range(0..medoids.len());
@@ -21,8 +19,7 @@ where
 
 fn closest_medoid<'a, T>(point: &'a T, medoids: &[&'a T]) -> (&'a T, f64)
 where
-    T: Distance,
-    &'a T: Distance,
+    &'a T: Distance<&'a T>,
 {
     let mut min_distance = f64::INFINITY;
     let mut min_point = medoids[0];
@@ -38,28 +35,27 @@ where
     (min_point, min_distance)
 }
 
-fn compute_total_cost<'a, T: Distance>(points: &'a [T], medoids: &[&'a T]) -> f64
+fn compute_total_cost<'a, T>(points: &'a [T], medoids: &[&'a T]) -> f64
 where
-    &'a T: Distance,
+    &'a T: Distance<&'a T>,
 {
     points.iter().map(|p| closest_medoid(&p, medoids).1).sum()
 }
 
-fn init_medoids<T: Distance>(points: &[T], count: usize) -> Vec<&T> {
+fn init_medoids<T>(points: &[T], count: usize) -> Vec<&T> {
     points
         .choose_multiple(&mut rand::thread_rng(), count)
         .collect()
 }
 
-pub fn clarans<'a, T: Distance>(
+pub fn clarans<'a, T>(
     points: &'a [T],
     num_clusters: usize,
     num_local: usize,
     max_neighbors: usize,
 ) -> Vec<&'a T>
 where
-    T: Distance,
-    &'a T: Distance,
+    &'a T: Distance<&'a T>,
 {
     let mut medoids: Vec<&T> = Vec::new();
     let mut cost = f64::INFINITY;

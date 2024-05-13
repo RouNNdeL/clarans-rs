@@ -5,8 +5,7 @@ pub trait Distance<T = Self> {
     fn distance(self, other: T) -> f64;
 }
 
-fn get_neighbor<'a, T>(points: &'a [T], medoids: &[&'a T]) -> Vec<&'a T>
-{
+fn get_neighbor<'a, T>(points: &'a [T], medoids: &[&'a T]) -> Vec<&'a T> {
     let mut rng = rand::thread_rng();
     let med_idx = rng.gen_range(0..medoids.len());
     let mut cloned = medoids.to_vec();

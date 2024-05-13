@@ -21,10 +21,10 @@ impl fmt::Display for Point {
     }
 }
 
-fn get_neighbor<'a>(points: &'a Vec<Point>, medoids: &Vec<&'a Point>) -> Vec<&'a Point> {
+fn get_neighbor<'a>(points: &'a [Point], medoids: &[&'a Point]) -> Vec<&'a Point> {
     let mut rng = rand::thread_rng();
     let med_idx = rng.gen_range(0..medoids.len());
-    let mut cloned = medoids.clone();
+    let mut cloned = medoids.to_vec();
 
     cloned[med_idx] = points
         .choose(&mut rand::thread_rng())
@@ -32,7 +32,7 @@ fn get_neighbor<'a>(points: &'a Vec<Point>, medoids: &Vec<&'a Point>) -> Vec<&'a
     cloned
 }
 
-fn closest_medoid<'a>(point: &'a Point, medoids: &Vec<&'a Point>) -> (&'a Point, f64) {
+fn closest_medoid<'a>(point: &'a Point, medoids: &[&'a Point]) -> (&'a Point, f64) {
     let mut min_distance = f64::INFINITY;
     let mut min_point = medoids[0];
 
@@ -47,18 +47,18 @@ fn closest_medoid<'a>(point: &'a Point, medoids: &Vec<&'a Point>) -> (&'a Point,
     (min_point, min_distance)
 }
 
-fn compute_total_cost(points: &Vec<Point>, medoids: &Vec<&Point>) -> f64 {
+fn compute_total_cost(points: &[Point], medoids: &[&Point]) -> f64 {
     points.iter().map(|p| closest_medoid(&p, medoids).1).sum()
 }
 
-fn init_medoids(points: &Vec<Point>, count: usize) -> Vec<&Point> {
+fn init_medoids(points: &[Point], count: usize) -> Vec<&Point> {
     points
         .choose_multiple(&mut rand::thread_rng(), count)
         .collect()
 }
 
 fn clarans(
-    points: &Vec<Point>,
+    points: &[Point],
     num_clusters: usize,
     num_local: usize,
     max_neighbors: usize,

@@ -52,7 +52,7 @@ fn init_medoids<T>(points: &[T], count: usize) -> Vec<&T> {
 pub fn calculate_medoids<'a, T>(
     points: &'a [T],
     num_clusters: usize,
-    num_local: usize,
+    minima: usize,
     max_neighbors: usize,
 ) -> (Vec<&'a T>, f64)
 where
@@ -60,7 +60,7 @@ where
 {
     let mut medoids: Vec<&T> = Vec::new();
     let mut cost = f64::INFINITY;
-    for _ in 0..num_local {
+    for _ in 0..minima {
         let mut current_medoids = init_medoids(points, num_clusters);
         let mut current_cost = compute_total_cost(&points, &current_medoids);
 
@@ -87,7 +87,7 @@ where
 pub fn calculate_medoids_fast<'a, T>(
     points: &'a [T],
     num_clusters: usize,
-    num_local: usize,
+    minima: usize,
     max_neighbors: usize,
     num_threads: usize,
 ) -> (Vec<&'a T>, f64)
@@ -105,14 +105,9 @@ where
         for thread_id in 0..num_threads {
             let points = Arc::clone(&points);
             let handle = s.spawn(move || {
-                let local_num_local = num_local / num_threads
-                    + if thread_id < num_local % num_threads {
-                        1
-                    } else {
-                        0
-                    };
-
-                calculate_medoids(&points, num_clusters, local_num_local, max_neighbors)
+                let remainder = minima % num_threads;
+                let local_minima = minima / num_threads + if thread_id < remainder { 1 } else { 0 };
+                calculate_medoids(&points, num_clusters, local_minima, max_neighbors)
             });
             handles.push(handle);
         }

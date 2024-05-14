@@ -47,7 +47,7 @@ fn init_medoids<T>(points: &[T], count: usize) -> Vec<&T> {
         .collect()
 }
 
-pub fn clarans<'a, T>(
+pub fn calculate_medoids<'a, T>(
     points: &'a [T],
     num_clusters: usize,
     num_local: usize,
@@ -68,6 +68,7 @@ where
             if neighbor_cost < current_cost {
                 current_medoids = neighbor;
                 current_cost = neighbor_cost;
+                break;
             }
         }
 

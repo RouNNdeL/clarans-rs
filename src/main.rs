@@ -1,10 +1,11 @@
 mod clarans;
 
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Point {
     x: f64,
     y: f64,
@@ -48,7 +49,10 @@ impl<const N: usize> fmt::Display for PointN<N> {
     }
 }
 
-fn create_random_points<const N: usize>(count: usize, value_range: ops::Range<f64>) -> Vec<PointN<N>> {
+fn create_random_points<const N: usize>(
+    count: usize,
+    value_range: ops::Range<f64>,
+) -> Vec<PointN<N>> {
     let mut rng = rand::thread_rng();
     let mut points: Vec<PointN<N>> = Vec::with_capacity(count);
 
@@ -67,13 +71,23 @@ fn create_random_points<const N: usize>(count: usize, value_range: ops::Range<f6
 }
 
 fn main() {
-    const DATA_SIZE: usize = 5000;
-    const CLUSTER_COUNT: usize = 10;
-    const MINIMA_COUNT: usize = 100;
-    const NEIGHBOR_MAX: usize = 100;
+    const INPUT_DATA: &str = "data.csv";
+    const OUTPUT_MEDOIDS: &str = "result.csv";
 
-    let points = create_random_points::<10>(DATA_SIZE, -10.0..10.0);
-    let medoids = clarans::clarans(&points, CLUSTER_COUNT, MINIMA_COUNT, NEIGHBOR_MAX);
+    let mut reader = csv::Reader::from_path(INPUT_DATA).expect("Unable to open file");
+    let mut points = Vec::new();
+    for p in reader.deserialize() {
+        let point: Point = p.expect("Unable to parse CSV");
+        points.push(point)
+    }
 
-    dbg!(&medoids);
+    let result = clarans::calculate_medoids(&points, 4, 100, 100);
+
+    let mut writer = csv::Writer::from_path(OUTPUT_MEDOIDS).expect("Unable to open file");
+    for p in result {
+        writer
+            .serialize(p)
+            .expect("Unable to serialize resulting point");
+    }
+    writer.flush().expect("Unable to flush");
 }

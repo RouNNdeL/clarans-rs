@@ -81,10 +81,12 @@ fn main() {
         points.push(point)
     }
 
-    let result = clarans::calculate_medoids(&points, 4, 100, 100);
+    //let (result_points, best_cost) = clarans::calculate_medoids(&points, 4, 1000, 100);
+    let (result_points, best_cost) = clarans::calculate_medoids_fast(&points, 4, 50000, 100, 8);
 
     let mut writer = csv::Writer::from_path(OUTPUT_MEDOIDS).expect("Unable to open file");
-    for p in result {
+    println!("Best cost: {best_cost}");
+    for p in result_points {
         writer
             .serialize(p)
             .expect("Unable to serialize resulting point");

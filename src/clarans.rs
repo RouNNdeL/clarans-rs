@@ -1,5 +1,7 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
+use std::sync::Arc;
+use std::thread;
 
 pub trait Distance<T = Self> {
     fn distance(self, other: T) -> f64;
@@ -52,14 +54,14 @@ pub fn calculate_medoids<'a, T>(
     num_clusters: usize,
     num_local: usize,
     max_neighbors: usize,
-) -> Vec<&'a T>
+) -> (Vec<&'a T>, f64)
 where
     &'a T: Distance<&'a T>,
 {
     let mut medoids: Vec<&T> = Vec::new();
     let mut cost = f64::INFINITY;
     for _ in 0..num_local {
-        let mut current_medoids = init_medoids(&points, num_clusters);
+        let mut current_medoids = init_medoids(points, num_clusters);
         let mut current_cost = compute_total_cost(&points, &current_medoids);
 
         for _ in 0..max_neighbors {
@@ -79,5 +81,50 @@ where
         }
     }
 
-    medoids
+    (medoids, cost)
+}
+
+pub fn calculate_medoids_fast<'a, T>(
+    points: &'a [T],
+    num_clusters: usize,
+    num_local: usize,
+    max_neighbors: usize,
+    num_threads: usize,
+) -> (Vec<&'a T>, f64)
+where
+    &'a T: Distance<&'a T> + Sync,
+    T: Sync,
+{
+    let mut overall_best_medoids = Vec::new();
+    let mut overall_best_cost = f64::INFINITY;
+
+    thread::scope(|s| {
+        let points = Arc::new(points);
+        let mut handles = vec![];
+
+        for thread_id in 0..num_threads {
+            let points = Arc::clone(&points);
+            let handle = s.spawn(move || {
+                let local_num_local = num_local / num_threads
+                    + if thread_id < num_local % num_threads {
+                        1
+                    } else {
+                        0
+                    };
+
+                calculate_medoids(&points, num_clusters, local_num_local, max_neighbors)
+            });
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            let (local_medoids, local_cost) = handle.join().unwrap();
+            if local_cost < overall_best_cost {
+                overall_best_medoids = local_medoids;
+                overall_best_cost = local_cost;
+            }
+        }
+    });
+
+    (overall_best_medoids, overall_best_cost)
 }

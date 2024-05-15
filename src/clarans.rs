@@ -1,6 +1,5 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
-use std::sync::Arc;
 use std::thread;
 
 pub trait Distance<T = Self> {
@@ -99,11 +98,9 @@ where
     let mut overall_best_cost = f64::INFINITY;
 
     thread::scope(|s| {
-        let points = Arc::new(points);
         let mut handles = vec![];
 
         for thread_id in 0..num_threads {
-            let points = Arc::clone(&points);
             let handle = s.spawn(move || {
                 let remainder = minima % num_threads;
                 let local_minima = minima / num_threads + if thread_id < remainder { 1 } else { 0 };

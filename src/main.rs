@@ -142,11 +142,9 @@ fn run_clarans(
         panic!("No points provided");
     }
 
-
     let (result_points, best_cost) =
         clarans::calculate_medoids_fast(&points, num_clusters, minima, max_neighbors, num_threads);
 
-    println!("Best cost: {best_cost}");
     if output_medoids.to_str() == Some("-") {
         let stdout = io::stdout();
         let mut writer = csv::Writer::from_writer(stdout.lock());

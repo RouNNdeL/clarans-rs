@@ -74,7 +74,6 @@ where
         }
 
         if current_cost < cost {
-            println!("Improved cost from {cost} to {current_cost}");
             medoids = current_medoids;
             cost = current_cost;
         }
